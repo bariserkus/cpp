@@ -1,21 +1,14 @@
-	#include <iostream>
-	#include "oneapi/tbb.h"
-	#include <execution>
+#include <iostream>
+#include <vector>
+#include "oneapi/dpl/algorithm"
+#include "oneapi/dpl/execution"
 
-	int main(){
-	int sum = oneapi::tbb::parallel_reduce(oneapi::tbb::blocked_range<int>(1,101), 0,
-	   [](oneapi::tbb::blocked_range<int> const& r, int init) -> int {
-	      for (int v = r.begin(); v != r.end(); v++  ) {
-		 init += v;
-	      }
-	      return init;
-	   },
-	   [](int lhs, int rhs) -> int {
-	      return lhs + rhs;
-	   }
-	);
+ 
+int main(){
+    std::vector<int> vec = {1, 2, 3, 4, 5, 10, 20, 4 };
 
-	std::cout << sum << '\n';
+    std::sort(std::execution::seq, vec.begin(), vec.end()); // sequential
+    std::sort(std::execution::par, vec.begin(), vec.end()); // parallel
 
-	return 0;
-	}
+    return 0;
+}

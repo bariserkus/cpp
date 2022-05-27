@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 3.22)
+project(tbb_clion)
+set(CMAKE_CXX_STANDARD 20)
+list(APPEND CMAKE_MODULE_PATH "/home/bariserkus/oneapi/tbb/latest/lib/cmake/tbb")
+#set(CMAKE_MODULE_PATH "/home/bariserkus/oneapi/tbb/latest/lib/cmake/tbb")
+add_executable(tbb_clion main.cpp)
+find_package(TBB REQUIRED)
+target_link_libraries(${PROJECT_NAME} tbb)
