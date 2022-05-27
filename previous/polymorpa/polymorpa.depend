@@ -1,0 +1,6 @@
+# depslib dependency file v1.0
+1632659676 source:e:\programming\cpp\polymorpa\main.cpp
+	<iostream>
+	<cstdlib>
+	<ctime>
+

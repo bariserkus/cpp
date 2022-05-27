@@ -1,0 +1,5 @@
+# depslib dependency file v1.0
+1606031449 source:e:\programming\cpp\bitshift\main.cpp
+	<iostream>
+	<iomanip>
+

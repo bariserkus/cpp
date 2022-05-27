@@ -1,0 +1,11 @@
+# depslib dependency file v1.0
+1604964581 source:e:\programming\cpp\newdataclass\main.cpp
+	<iostream>
+	"Person.h"
+
+1604967879 e:\programming\cpp\newdataclass\include\person.h
+
+1604967902 source:e:\programming\cpp\newdataclass\src\person.cpp
+	<iostream>
+	"Person.h"
+

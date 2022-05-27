@@ -1,0 +1,5 @@
+# depslib dependency file v1.0
+1633461715 source:e:\programming\cpp\appeararray\main.cpp
+	<iostream>
+	<bits/stdc++.h>
+

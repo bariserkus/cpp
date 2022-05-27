@@ -1,0 +1,11 @@
+# depslib dependency file v1.0
+1631917021 source:e:\programming\cpp\operover\main.cpp
+	<iostream>
+	<MyString.h>
+
+1631912348 e:\programming\cpp\operover\include\mystring.h
+
+1631912352 source:e:\programming\cpp\operover\src\mystring.cpp
+	<iostream>
+	"MyString.h"
+

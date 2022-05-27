@@ -1,0 +1,67 @@
+# depslib dependency file v1.0
+1633289769 source:e:\programming\cpp\fractal\src\myclass.cpp
+	"myClass.h"
+
+1633289769 e:\programming\cpp\fractal\include\myclass.h
+
+1637288481 source:e:\programming\cpp\fractal\main.cpp
+	<iostream>
+	"FractalCreator.h"
+	"RGB.h"
+	"Zoom.h"
+
+1633291391 e:\programming\cpp\fractal\include\bitmapfileheader.h
+	<cstdint>
+
+1633291415 e:\programming\cpp\fractal\include\bitmapinfoheader.h
+	<cstdint>
+
+1633294758 source:e:\programming\cpp\fractal\src\bitmap.cpp
+	<fstream>
+	"Bitmap.h"
+	"BitmapInfoHeader.h"
+	"BitmapFileHeader.h"
+
+1633294341 e:\programming\cpp\fractal\include\bitmap.h
+	<string>
+	<cstdint>
+	<memory>
+
+1633297440 source:e:\programming\cpp\fractal\src\mandelbrot.cpp
+	<complex>
+	"Mandelbrot.h"
+
+1633298773 e:\programming\cpp\fractal\include\mandelbrot.h
+
+1634500461 e:\programming\cpp\fractal\include\zoom.h
+
+1637279402 source:e:\programming\cpp\fractal\src\zoomlist.cpp
+	"ZoomList.h"
+
+1634502446 e:\programming\cpp\fractal\include\zoomlist.h
+	<vector>
+	<utility>
+	"Zoom.h"
+
+1637282124 e:\programming\cpp\fractal\include\fractalcreator.h
+	<string>
+	<cstdint>
+	<memory>
+	<math.h>
+	<vector>
+	"Zoom.h"
+	"Mandelbrot.h"
+	"Bitmap.h"
+	"ZoomList.h"
+	"RGB.h"
+
+1637283226 source:e:\programming\cpp\fractal\src\fractalcreator.cpp
+	<iostream>
+	<cassert>
+	"FractalCreator.h"
+
+1637277794 source:e:\programming\cpp\fractal\src\rgb.cpp
+	"RGB.h"
+
+1637277797 e:\programming\cpp\fractal\include\rgb.h
+

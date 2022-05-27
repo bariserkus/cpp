@@ -1,0 +1,6 @@
+# depslib dependency file v1.0
+1635417141 source:d:\workr\cpp\dsa\ex01\main.cpp
+	<iostream>
+	<vector>
+	<algorithm>
+

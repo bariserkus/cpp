@@ -1,0 +1,11 @@
+# depslib dependency file v1.0
+1604961758 source:e:\programming\cpp\newclass\main.cpp
+	<iostream>
+	<Cats.h>
+
+1605477874 e:\programming\cpp\newclass\include\cats.h
+
+1604961524 source:e:\programming\cpp\newclass\src\cats.cpp
+	<iostream>
+	"Cats.h"
+

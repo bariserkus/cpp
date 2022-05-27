@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<results version="2">
+    <cppcheck version="2.3" />
+    <errors>
+        <error id="noExplicitConstructor" severity="style" msg="Struct &apos;ColorSpecification&apos; has a constructor with 1 argument that is not explicit." verbose="Struct &apos;ColorSpecification&apos; has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided." cwe="398" hash="16361089490215205232">
+            <location file="main.cpp" line="79" column="5" />
+            <symbol>ColorSpecification</symbol>
+        </error>
+        <error id="noExplicitConstructor" severity="style" msg="Struct &apos;SizeSpecification&apos; has a constructor with 1 argument that is not explicit." verbose="Struct &apos;SizeSpecification&apos; has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided." cwe="398" hash="14997963728967954981">
+            <location file="main.cpp" line="90" column="5" />
+            <symbol>SizeSpecification</symbol>
+        </error>
+        <error id="useStlAlgorithm" severity="style" msg="Consider using std::copy_if algorithm instead of a raw loop." verbose="Consider using std::copy_if algorithm instead of a raw loop." cwe="398" hash="9116821673056383089">
+            <location file="main.cpp" line="25" column="23" />
+        </error>
+        <error id="useStlAlgorithm" severity="style" msg="Consider using std::copy_if algorithm instead of a raw loop." verbose="Consider using std::copy_if algorithm instead of a raw loop." cwe="398" hash="6492667436402621619">
+            <location file="main.cpp" line="34" column="23" />
+        </error>
+        <error id="useStlAlgorithm" severity="style" msg="Consider using std::copy_if algorithm instead of a raw loop." verbose="Consider using std::copy_if algorithm instead of a raw loop." cwe="398" hash="17966286012768951535">
+            <location file="main.cpp" line="43" column="23" />
+        </error>
+        <error id="useStlAlgorithm" severity="style" msg="Consider using std::copy_if algorithm instead of a raw loop." verbose="Consider using std::copy_if algorithm instead of a raw loop." cwe="398" hash="3344307070630696126">
+            <location file="main.cpp" line="71" column="23" />
+        </error>
+        <error id="missingIncludeSystem" severity="information" msg="Cppcheck cannot find all the include files (use --check-config for details)" verbose="Cppcheck cannot find all the include files. Cppcheck can check the code without the include files found. But the results will probably be more accurate if all the include files are found. Please check your project&apos;s include directories and add all of them as include directories for Cppcheck. To see what files Cppcheck cannot find use --check-config." />
+    </errors>
+</results>

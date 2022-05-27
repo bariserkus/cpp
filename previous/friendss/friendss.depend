@@ -1,0 +1,16 @@
+# depslib dependency file v1.0
+1631823857 source:e:\programming\cpp\friendss\src\integer.cpp
+	"integer.h"
+
+1631825505 e:\programming\cpp\friendss\include\integer.h
+
+1631823698 source:e:\programming\cpp\friendss\main.cpp
+	<iostream>
+	"integ.h"
+
+1631824047 source:e:\programming\cpp\friendss\src\integ.cpp
+	"integ.h"
+
+1631825498 e:\programming\cpp\friendss\include\integ.h
+	<integer.h>
+

@@ -1,0 +1,5 @@
+# depslib dependency file v1.0
+1637238871 source:d:\workr\cpp\dsa\maxcontig\main.cpp
+	<iostream>
+	<climits>
+

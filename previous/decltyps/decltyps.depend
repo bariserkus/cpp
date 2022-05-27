@@ -1,0 +1,5 @@
+# depslib dependency file v1.0
+1633355190 source:d:\workr\cpp\dsa\decltyps\main.cpp
+	<iostream>
+	<typeinfo>
+

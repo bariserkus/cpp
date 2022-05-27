@@ -1,0 +1,5 @@
+# depslib dependency file v1.0
+1636323860 source:e:\programming\cpp\binsearol\main.cpp
+	<iostream>
+	<vector>
+

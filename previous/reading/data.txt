@@ -1,0 +1,2 @@
+population uk: 640000
+population france: 538093

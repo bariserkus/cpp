@@ -1,0 +1,5 @@
+# depslib dependency file v1.0
+1636451680 source:d:\workr\cpp\dsa\leastnum\main.cpp
+	<iostream>
+	<vector>
+

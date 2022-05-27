@@ -1,0 +1,6 @@
+# depslib dependency file v1.0
+1636300559 source:e:\programming\cpp\slidewindow\main.cpp
+	<iostream>
+	<deque>
+	<vector>
+

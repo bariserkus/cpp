@@ -1,0 +1,18 @@
+CCCC_Module@Person@struct@
+CCCC_ModExt@Person@struct@main.cpp@7@definition@????0@LOC:6 COM:1 MVG:0@0@d@
+CCCC_Module@anonymous@@
+CCCC_Module@char@builtin@
+CCCC_ModExt@char@builtin@<nofile>@0@builtin definition@d?????@@0@d@
+CCCC_Module@double@builtin@
+CCCC_ModExt@double@builtin@<nofile>@0@builtin definition@d?????@@0@d@
+CCCC_Module@float@builtin@
+CCCC_ModExt@float@builtin@<nofile>@0@builtin definition@d?????@@0@d@
+CCCC_Module@int@builtin@
+CCCC_ModExt@int@builtin@<nofile>@0@builtin definition@d?????@@0@d@
+CCCC_Module@long@builtin@
+CCCC_ModExt@long@builtin@<nofile>@0@builtin definition@d?????@@0@d@
+CCCC_Module@void@builtin@
+CCCC_ModExt@void@builtin@<nofile>@0@builtin definition@d?????@@0@d@
+CCCC_Member@anonymous@main@@()@
+CCCC_MemExt@anonymous@main@@()@main.cpp@17@definition@F???0@LOC:32 COM:5 MVG:3@0@d@
+CCCC_RejExt@main.cpp@1@<file scope items>@F???0@LOC:1 COM:0 MVG:0@0@r@

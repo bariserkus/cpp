@@ -1,0 +1,5 @@
+# depslib dependency file v1.0
+1637153547 source:d:\workr\cpp\dsa\lowhighkey\main.cpp
+	<iostream>
+	<vector>
+

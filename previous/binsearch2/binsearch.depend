@@ -1,0 +1,5 @@
+# depslib dependency file v1.0
+1636317774 source:e:\programming\cpp\binsearch\main.cpp
+	<iostream>
+	<vector>
+
