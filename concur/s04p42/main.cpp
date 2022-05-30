@@ -1,28 +1,56 @@
-#include <iostream>
-#include <tbb/tbb.h>
-//#include <algorithm>
-//#include <vector>
-//#include <execution>
+#include <cstddef>
+#include <cstdio>
+#include <algorithm>
+#include <random>
+#include <ratio>
+#include <vector>
+#include <execution>
+#include <chrono>
 
+using std::chrono::duration;
+using std::chrono::duration_cast;
+using std::chrono::high_resolution_clock;
+using std::milli;
+using std::random_device;
+using std::sort;
+using std::vector;
 
-int main(){
+const size_t testSize = 10'000'000;
+const int iterationCount = 5;
 
-    tbb::parallel_invoke(
-            []() { std::cout << " Hello " << std::endl; },
-            []() { std::cout << " TBB! " << std::endl; }
-    );
-
-    return 0;
+void print_results(const char *const tag, const vector<double> &sorted,
+                   high_resolution_clock::time_point startTime,
+                   high_resolution_clock::time_point endTime) {
+    printf("%s: Lowest: %g Highest: %g Time: %fms\n", tag, sorted.front(), sorted.back(),
+           duration_cast<duration<double, milli>>(endTime - startTime).count());
 }
 
-/*
-std::vector<int> v{0,2,5,2,-1};
+int main() {
+    random_device rd;
 
-std::cout << v[3] << '\n';
+    // generate some random doubles:
+    printf("Testing with %zu doubles...\n", testSize);
+    vector<double> doubles(testSize);
+    for (auto &d: doubles) {
+        d = static_cast<double>(rd());
+    }
 
-// standard sequential sort
-std::sort(v.begin(), v.end());
+    // time how long it takes to sort them:
+    for (int i = 0; i < iterationCount; ++i) {
+        vector<double> sorted(doubles);
+        const auto startTime = high_resolution_clock::now();
+        sort(sorted.begin(), sorted.end());
+        const auto endTime = high_resolution_clock::now();
+        print_results("Serial STL ", sorted, startTime, endTime);
+    }
 
-// sequential execution
-std::sort(std::execution::seq, v.begin(), v.end());
-*/
+    for (int i = 0; i < iterationCount; ++i) {
+        vector<double> sorted(doubles);
+        const auto startTime = high_resolution_clock::now();
+        // same sort call as above, but with par_unseq:
+        std::sort(std::execution::par, sorted.begin(), sorted.end());
+        const auto endTime = high_resolution_clock::now();
+        // in our output, note that these are the parallel results:
+        print_results("Parallel STL", sorted, startTime, endTime);
+    }
+}
