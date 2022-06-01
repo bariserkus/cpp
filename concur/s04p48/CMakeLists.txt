@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.22)
+project(s04p45)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_FLAGS "-pthread")
+find_package(TBB REQUIRED)
+add_executable(s04p45 main.cpp parallel_find.h common_objs.h utils.h)
+target_link_libraries(s04p45 tbb)
