@@ -1,15 +1,13 @@
-#include <iostream>
-#include <thread>
-#include <future>
 #include <chrono>
+#include <functional>
+#include <numeric>
+#include <vector>
 #include <execution>
-#include <memory>
 
-#include "parallel_find.h"
-#include "common_objs.h"
+#include "partial_sum.h"
 #include "utils.h"
 
-const size_t testSize = 100'000'000;
+const size_t testSize = 100000000;
 
 using std::chrono::duration;
 using std::chrono::duration_cast;
@@ -22,44 +20,32 @@ void print_results(const char *const tag,
     printf("%s: Time: %fms\n", tag, duration_cast<duration<double, milli>>(endTime - startTime).count());
 }
 
+
 int main()
 {
-
     std::vector<int> ints(testSize);
-    for (size_t i = 0; i < testSize; i++)
-    {
-        ints[i] = i;
+    std::vector<int> outs(testSize);
+    for (auto& i : ints) {
+        i = 1;
     }
 
-    int looking_for = 27'500'000;
-
+    //sequential implementation
     auto startTime = high_resolution_clock::now();
-    auto value_pt = parallel_find_pt(ints.begin(), ints.end(), looking_for);
+    std::inclusive_scan(ints.cbegin(), ints.cend(), outs.begin());
     auto endTime = high_resolution_clock::now();
-    print_results("Parallel-package_task_impl :", startTime, endTime);
+    print_results("sequential scan", startTime, endTime);
 
-    /*
-    std::atomic<bool> done_flag{0};
+    // C++17 parallel implementation
     startTime = high_resolution_clock::now();
-    auto value_async = parallel_find_async(ints.begin(), ints.end(), looking_for, &done_flag);
+    std::inclusive_scan(std::execution::par,ints.cbegin(), ints.cend(), outs.begin());
     endTime = high_resolution_clock::now();
-    print_results("Parallel-async_impl :", startTime, endTime);
-     */
+    print_results("parallel scan", startTime, endTime);
 
+    // Our parallel implementation
     startTime = high_resolution_clock::now();
-    std::find(ints.begin(), ints.end(), looking_for);
+    parallel_partial_sum(ints.begin(), ints.end());
     endTime = high_resolution_clock::now();
-    print_results("STL sequential :", startTime, endTime);
-
-    startTime = high_resolution_clock::now();
-    std::find(std::execution::par,ints.begin(), ints.end(), looking_for);
-    endTime = high_resolution_clock::now();
-    print_results("STL parallel-par :", startTime, endTime);
-
-    startTime = high_resolution_clock::now();
-    std::find(std::execution::seq, ints.begin(), ints.end(), looking_for);
-    endTime = high_resolution_clock::now();
-    print_results("STL parallel-seq :", startTime, endTime);
+    print_results("parallel scan manual", startTime, endTime);
 
     return 0;
 }

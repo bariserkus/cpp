@@ -1,11 +1,15 @@
 #include <iostream>
+#include <thread>
+#include <future>
 #include <chrono>
 #include <execution>
-#include <chrono>
-#include "parallel_for_each.h"
+#include <memory>
+
+#include "parallel_find.h"
+#include "common_objs.h"
 #include "utils.h"
 
-const size_t testSize = 100000;
+const size_t testSize = 100'000'000;
 
 using std::chrono::duration;
 using std::chrono::duration_cast;
@@ -18,49 +22,44 @@ void print_results(const char *const tag,
     printf("%s: Time: %fms\n", tag, duration_cast<duration<double, milli>>(endTime - startTime).count());
 }
 
-
 int main()
 {
+
     std::vector<int> ints(testSize);
-    for (auto& i : ints) {
-        i = 1;
+    for (size_t i = 0; i < testSize; i++)
+    {
+        ints[i] = i;
     }
 
-    auto long_function = []( const int& n )
-    {
-        int sum = 0;
-        for (auto i = 0; i < 100000; i++)
-        {
-            sum += 1*(i-499);
-        }
-    };
+    int looking_for = 27'500'000;
 
     auto startTime = high_resolution_clock::now();
-    std::for_each(ints.cbegin(), ints.cend(), long_function);
+    auto value_pt = parallel_find_pt(ints.begin(), ints.end(), looking_for);
     auto endTime = high_resolution_clock::now();
-    print_results("STL                   ", startTime, endTime);
+    print_results("Parallel-package_task_impl :", startTime, endTime);
+
+    /*
+    std::atomic<bool> done_flag{0};
+    startTime = high_resolution_clock::now();
+    auto value_async = parallel_find_async(ints.begin(), ints.end(), looking_for, &done_flag);
+    endTime = high_resolution_clock::now();
+    print_results("Parallel-async_impl :", startTime, endTime);
+     */
 
     startTime = high_resolution_clock::now();
-    for_each(std::execution::seq, ints.cbegin(), ints.cend(), long_function);
+    std::find(ints.begin(), ints.end(), looking_for);
     endTime = high_resolution_clock::now();
-    print_results("STL-seq               ", startTime, endTime);
+    print_results("STL sequential :", startTime, endTime);
 
     startTime = high_resolution_clock::now();
-    std::for_each(std::execution::par, ints.cbegin(), ints.cend(), long_function);
+    std::find(std::execution::par,ints.begin(), ints.end(), looking_for);
     endTime = high_resolution_clock::now();
-    print_results("STL-par               ", startTime, endTime);
+    print_results("STL parallel-par :", startTime, endTime);
 
     startTime = high_resolution_clock::now();
-    parallel_for_each_pt(ints.cbegin(), ints.cend(), long_function);
+    std::find(std::execution::seq, ints.begin(), ints.end(), looking_for);
     endTime = high_resolution_clock::now();
-    print_results("Parallel-package_task ", startTime, endTime);
-
-    startTime = high_resolution_clock::now();
-    parallel_for_each_async(ints.cbegin(), ints.cend(), long_function);
-    endTime = high_resolution_clock::now();
-    print_results("Parallel-async        ", startTime, endTime);
-
-    std::cout << std::endl << std::endl << std::endl << std::endl << std::endl << std::endl << std::endl << std::endl;
+    print_results("STL parallel-seq :", startTime, endTime);
 
     return 0;
 }

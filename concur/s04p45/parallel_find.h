@@ -3,20 +3,47 @@
 #include <vector>
 #include <thread>
 #include <future>
+#include <atomic>
 
 #include "common_objs.h"
 
-const int MPD{10};
+const int MPD{100};
 
-
-/* This is the parallel version of for_each function implementation with package tasks and futures */
-template<typename Iterator, typename Func>
-void parallel_for_each_pt( Iterator first, Iterator last, Func f )
+template<typename Iterator, typename MatchType>
+Iterator parallel_find_pt(Iterator first, Iterator last, MatchType match)
 {
+    struct find_element
+    {
+        void operator()(Iterator begin, Iterator end,
+                        MatchType match,
+                        std::promise<Iterator>* result,
+                        std::atomic<bool>* done_flag)
+        {
+            try
+            {
+                for( ; (begin != end) && !std::atomic_load(done_flag); ++begin)
+                {
+                    if (*begin == match)
+                    {
+                        result->set_value(begin);
+                        //done_flag.store(true);
+                        std::atomic_store(done_flag, true);
+                        return;
+                    }
+                }
+            }
+            catch (...)
+            {
+                result->set_exception(std::current_exception());
+                done_flag->store(true);
+            }
+        }
+    };
+
     unsigned long const length = std::distance(first, last);
 
     if (!length)
-        return;
+        return last;
 
     /*	Calculate the optimized number of threads to run the algorithm	*/
 
@@ -28,64 +55,75 @@ void parallel_for_each_pt( Iterator first, Iterator last, Func f )
     unsigned long const block_size = length / num_threads;
 
     /*	Declare the needed data structures	*/
+    std::promise<Iterator> result;
+    std::atomic<bool> done_flag(false);
 
-    std::vector<std::future<void>> futures(num_threads - 1);
     std::vector<std::thread> threads(num_threads - 1);
-    join_threads joiner(threads);
 
-    /*	Partition of data between threads	*/
-
-    Iterator block_start = first;
-    for ( unsigned long i =0; i <= ( num_threads -2 ); i++ )
     {
-        Iterator block_end = block_start;
-        std::advance(block_end, block_size);
+        join_threads joiner(threads);
 
-        std::packaged_task<void(void)> task(
-                [=]()
-                {
-                    std::for_each(block_start, block_end, f);
-                }
-        );
+        // task dividing loop
+        Iterator block_start = first;
+        for (unsigned long i = 0; i < (num_threads - 1); i++)
+        {
+            Iterator block_end = block_start;
+            std::advance(block_end, block_size);
 
-        futures[i] = task.get_future();
-        threads[i] = std::thread(std::move(task));
+            threads[i] = std::thread(find_element(), block_start, block_end, match, &result, &done_flag);
 
-        block_start = block_end;
+            block_start = block_end;
+        }
+
+        // perform the find operation for final block in this thread.
+        find_element()(block_start, last, match, &result, &done_flag);
     }
 
-    // call the function for last block from this thread
-    std::for_each(block_start, last, f);
+    if (!done_flag.load())
+    {
+        return last;
+    }
 
-    /*	wait until futures are ready	*/
-    for (unsigned long i = 0; i < (num_threads - 1); ++i)
-        futures[i].get();
-
+    return result.get_future().get();
 }
 
-/* This is the parallel version of for_each function implmentation with std::async */
-template<typename Iterator, typename Func>
-void parallel_for_each_async(Iterator first, Iterator last, Func f)
+template<typename Iterator, typename MatchType>
+Iterator parallel_find_async(Iterator first, Iterator last, MatchType match, std::atomic<bool>* done_flag)
 {
-    unsigned long const length = std::distance(first,last);
-
-    if (!length)
-        return;
-
-    unsigned long const min_per_thread = MPD;
-
-    if (length < 2 * min_per_thread)
+    try
     {
-        std::for_each(first, last, f);
+        unsigned long const length = std::distance(first, last);
+        unsigned long const min_per_thread = MPD;
+
+        if (length < 2 * min_per_thread)
+        {
+            for ( ; (first != last ) && done_flag; ++first)
+            {
+                //std::cout << "1\n";
+                if (*first == match)
+                {
+                    *done_flag = true;
+                    std::cout << "2\n";
+                    return first;
+                }
+            }
+            return last;
+        }
+        else
+        {
+            Iterator const mid_point = first + length / 2;
+            std::future<Iterator> async_result =
+                    std::async(&parallel_find_async<Iterator, MatchType>,mid_point, last, match, std::ref(done_flag));
+
+            Iterator const direct_result =
+                    parallel_find_async(first, mid_point, match, done_flag);
+
+            return (direct_result == mid_point) ? async_result.get() : direct_result;
+        }
     }
-    else
+    catch (const std::exception&)
     {
-        Iterator const mid_point = first + length / 2;
-        std::future<void> first_half =
-                std::async(std::launch::async, &parallel_for_each_async<Iterator, Func>, first, mid_point, f);
-
-        parallel_for_each_async(mid_point, last, f);
-        first_half.get();
+        *done_flag = true;
+        throw;
     }
-
 }

@@ -1,197 +1,230 @@
 #pragma once
-
-#include <vector>
+#include <iostream>
 #include <thread>
-#include <future>
-#include <atomic>
-#include <numeric>
+#include <algorithm>
+#include <vector>
 
+#include "utils.h"
 #include "common_objs.h"
 
+class Matrix {
 
-template<typename Iterator>
-void parallel_partial_sum(Iterator first, Iterator last)
-{
-    typedef typename Iterator::value_type value_type;
+    int* data;
+    int rows; // row count
+    int columns; // column count
 
-    struct process_chunk
+public:
+
+    Matrix(int _n, int _m) : rows(_n), columns(_m)
     {
-        void operator()(Iterator begin, Iterator last,
-                        std::future<value_type>* previous_end_value,
-                        std::promise<value_type>* end_value)
+        data = new int[ rows * columns ];
+        //set the array to 0
+        std::fill(data, data + rows*columns, 0);
+    }
+
+    // i -> 0 to n-1
+    // j -> 0 to m-1
+    void set_value(int i, int j, int value)
+    {
+        data[i * columns + j] = value;
+    }
+
+    void set_all( int value)
+    {
+        std::fill(data, data + rows * columns, value);
+    }
+
+    static void multiply(Matrix* x, Matrix* y, Matrix* results)
+    {
+        //check the matrix sizes are correct to multiply
+        if (!(x->columns == y->rows) || !((x->rows == results->rows) && (y->columns == results->columns)))
         {
-            try
+            std::cout << " ERROR : Invalid matrix sizes for multiplication \n";
+            return;
+        }
+
+        // r = result_size
+        int r = results->rows * results->columns;
+
+        for (size_t i = 0; i < r; i++)
+        {
+            for (size_t j = 0; j < x->columns; j++)
             {
-                Iterator end = last;
-                ++end;
-                std::partial_sum(begin, end, begin);
-                if (previous_end_value)
+                results->data[i] += x->data[ (i / results->columns) * x->columns + j ]
+                                    * y->data[ i % results->rows + j*y->columns ];
+            }
+        }
+    }
+
+    static void parallel_multiply(Matrix* x, Matrix* y, Matrix* results)
+    {
+        struct process_data_chunk
+        {
+            void operator()(Matrix* results, Matrix* x, Matrix* y, int start_index, int end_index)
+            {
+                for (size_t i = start_index; i < end_index; i++)
                 {
-                    //this is not the first thread
-                    auto addend = previous_end_value->get();
-                    *last += addend;
-                    if (end_value)
+                    for (size_t j = 0; j < x->columns; j++)
                     {
-                        //not the last block
-                        end_value->set_value(*last);
+                        results->data[i] += x->data[(i / results->columns) * x->columns + j]
+                                            * y->data[i % results->rows + j * y->columns];
                     }
-                    std::for_each(begin, last, [addend](value_type& item)
-                    {
-                        item += addend;
-                    });
-                }
-                else if (end_value)
-                {
-                    //this is the first thread
-                    end_value->set_value(*last);
                 }
             }
-            catch (...)
-            {
-                if (end_value)
-                {
-                    end_value->set_exception(std::current_exception());
-                }
-                else
-                {
-                    //final block - main therad is the one process the final block
-                    throw;
-                }
-            }
+
+        };
+
+        //check the matrix sizes are correct to multiply
+        if (!((x->rows == results->rows) && (y->columns == results->columns)) || !(x->columns == y->rows))
+        {
+            std::cout << " ERROR : Invalid matrix sizes for multiplication \n";
         }
-    };
-    unsigned long const length = std::distance(first, last);
 
-    if (!length)
-        return;
+        // r = result_size
+        int length = results->rows * results->columns;
 
-    unsigned long const min_per_thread      = 25;
-    unsigned long const max_threads         = (length + min_per_thread - 1) / min_per_thread;
-    unsigned long const hardware_threads    = std::thread::hardware_concurrency();
-    unsigned long const num_threads         = std::min(hardware_threads != 0 ? hardware_threads : 2, max_threads);
-    unsigned long const block_size          = length / num_threads;
+        if (!length)
+            return;
 
+        int min_per_thread = 10000;
+        int max_threads = (length + min_per_thread - 1) / min_per_thread;
+        int hardware_threads = std::thread::hardware_concurrency();
+        int num_threads = std::min(hardware_threads != 0 ? hardware_threads : 2, max_threads);
+        int block_size = length / num_threads;
 
-    //typedef typename Iterator::value_type value_type;
+        std::vector<std::thread> threads(num_threads - 1);
+        int block_start = 0;
+        int block_end = 0;
+        {
+            join_threads joiner(threads);
 
-    std::vector<std::thread> threads(num_threads - 1);
-    std::vector<std::promise<value_type> > end_values(num_threads - 1);
-    std::vector<std::future<value_type> > previous_end_values;
-    previous_end_values.reserve(num_threads - 1);
-    join_threads joiner(threads);
+            for (unsigned long i = 0; i < (num_threads - 1); i++)
+            {
+                block_start = i * block_size;
+                block_end = block_start + block_size;
+                threads[i] = std::thread(process_data_chunk(), results, x, y, block_start, block_end);
+            }
 
-    Iterator block_start = first;
-    for (unsigned long i = 0; i < (num_threads - 1); ++i)
-    {
-        Iterator block_last = block_start;
-        std::advance(block_last, block_size - 1);
-
-        threads[i] = std::thread(process_chunk(),
-                                 block_start, block_last,(i != 0) ? &previous_end_values[i - 1] : 0, &end_values[i]);
-
-        block_start = block_last;
-        ++block_start;
-        previous_end_values.push_back(end_values[i].get_future());
+            // perform the find operation for final block in this thread.
+            process_data_chunk()(results, x, y, block_end, length);
+        }
     }
 
-    Iterator final_element = block_start;
-    std::advance(final_element, std::distance(block_start, last) - 1);
-    process_chunk()(block_start, final_element,(num_threads > 1) ? &previous_end_values.back() : 0, 0);
-}
-
-struct barrier
-{
-    std::atomic<unsigned> count;
-    std::atomic<unsigned> spaces;
-    std::atomic<unsigned> generation;
-    barrier(unsigned count_) :
-            count(count_), spaces(count_), generation(0)
-    {}
-    void wait()
+    static void transpose(Matrix* x,  Matrix* results)
     {
-        unsigned const gen = generation.load();
-        if (!--spaces)
+        //check the matrix sizes are correct to multiply
+        if ( !((x->columns == results->rows) && (x->rows == results->columns)) )
         {
-            spaces = count.load();
-            ++generation;
+            std::cout << " ERROR : Invalid matrix sizes for transpose \n";
+            return;
         }
-        else
+
+        // r = result_size
+        int r = results->rows * results->columns;
+
+        int result_column = 0;
+        int result_row = 0;
+
+        int input_column = 0;
+        int input_row = 0;
+
+        for (size_t i = 0; i < r; i++)
         {
-            while (generation.load() == gen)
-            {
-                std::this_thread::yield();
-            }
+            //get the current row and column count
+            result_row = i / results->columns;
+            result_column = i % results->columns;
+
+            //flipped the columns and row for input
+            input_row = result_column;
+            input_column = result_row;
+
+            //store the corresponding element from input to the results
+            results->data[i] = x->data[input_row * x->columns + input_column];
         }
     }
-    void done_waiting()
+
+    static void parallel_transpose(Matrix* x,  Matrix* results)
     {
-        --count;
-        if (!--spaces)
+        struct process_data_chunk
         {
-            spaces = count.load();
-            ++generation;
+            void operator()(Matrix* results, Matrix* x, int start_index, int end_index)
+            {
+                int result_column = 0;
+                int result_row = 0;
+
+                int input_column = 0;
+                int input_row = 0;
+
+                for (size_t i = start_index; i < end_index; i++)
+                {
+                    result_row = i / results->columns;
+                    result_column = i % results->columns;
+
+                    input_row = result_column;
+                    input_column = result_row;
+
+                    results->data[i] = x->data[input_row * x->columns + input_column];
+                }
+            }
+
+        };
+
+        //check the matrix sizes are correct to multiply
+        if (!((x->columns == results->rows) && (x->rows == results->columns)))
+        {
+            std::cout << " ERROR : Invalid matrix sizes for transpose \n";
+            return;
         }
+
+        // r = result_size
+        int length = results->rows * results->columns;
+
+        if (!length)
+            return;
+
+        int min_per_thread = 10000;
+        int max_threads = (length + min_per_thread - 1) / min_per_thread;
+        int hardware_threads = std::thread::hardware_concurrency();
+        int num_threads = std::min(hardware_threads != 0 ? hardware_threads : 2, max_threads);
+        int block_size = length / num_threads;
+
+        std::vector<std::thread> threads(num_threads - 1);
+        int block_start = 0;
+        int block_end = 0;
+        {
+            join_threads joiner(threads);
+
+            for (unsigned long i = 0; i < (num_threads - 1); i++)
+            {
+                block_start = i * block_size;
+                block_end = block_start + block_size;
+                threads[i] = std::thread(process_data_chunk(), results, x, block_start, block_end);
+            }
+
+            // perform the find operation for final block in this thread.
+            process_data_chunk()(results, x, block_end, length);
+        }
+    }
+
+    void print()
+    {
+        if ( rows < 50 && columns < 50 )
+        {
+            for (size_t i = 0; i < rows; i++)
+            {
+                for (size_t j = 0; j < columns; j++)
+                {
+                    std::cout << data[j + i * columns] << " ";
+                }
+
+                std::cout << "\n";
+            }
+            std::cout << std::endl;
+        }
+    }
+
+    ~Matrix()
+    {
+        delete data;
     }
 };
-template<typename Iterator>
-void parallel_partial_sum_barrier(Iterator first, Iterator last)
-{
-    typedef typename Iterator::value_type value_type;
-    struct process_element
-    {
-        void operator()(Iterator first, Iterator last,
-                        std::vector<value_type>& buffer,
-                        unsigned i, barrier& b)
-        {
-            value_type& ith_element = *(first + i);
-            bool update_source = false;
-
-            for (unsigned step = 0, stride = 1; stride <= i; ++step, stride *= 2)
-            {
-                value_type const& source = (step % 2) ? buffer[i] : ith_element;
-                value_type& dest = (step % 2) ? ith_element : buffer[i];
-                value_type const& addend = (step % 2) ?  buffer[i - stride] : *(first + i - stride);
-                dest = source + addend;
-                update_source = !(step % 2);
-                b.wait();
-            }
-            if (update_source)
-            {
-                ith_element = buffer[i];
-            }
-            b.done_waiting();
-        }
-    };
-    unsigned long const length = std::distance(first, last);
-
-    if (length <= 1)
-        return;
-
-    std::vector<value_type> buffer(length);
-    barrier b(length);
-    std::vector<std::thread> threads(length - 1);
-    join_threads joiner(threads);
-
-    Iterator block_start = first;
-    for (unsigned long i = 0; i < (length - 1); ++i)
-    {
-        threads[i] = std::thread(process_element(), first, last,
-                                 std::ref(buffer), i, std::ref(b));
-    }
-    process_element()(first, last, buffer, length - 1, b);
-}
-
-
-
-template<typename Iterator, typename OutIterator >
-void sequentail_partial_sum(Iterator first, Iterator last, OutIterator y)
-{
-    unsigned long const length = std::distance(first, last);
-
-    y[0] = first[0];
-
-    for (size_t i = 1; i < length; i++)
-    {
-        y[i] = first[i] + y[i - 1];
-    }
-}
